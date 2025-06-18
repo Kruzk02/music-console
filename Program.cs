@@ -1,6 +1,7 @@
 ﻿
 using NAudio.Wave;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 var musicFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
 
@@ -19,33 +20,45 @@ var file = AnsiConsole.Prompt(
 
 var i = musicFiles.FindIndex(0, mFile => mFile == file);
 
-using var audioFile = new AudioFileReader(musicFolder + "/" + file);
+var audioFile = new AudioFileReader(musicFolder + "/" + file);
 using var outputDevice = new WaveOutEvent();
 
+outputDevice.Stop();
 outputDevice.Init(audioFile);
 outputDevice.Play();
 
+var columns = new List<IRenderable>();
+var space = new Panel("Hit spacebar to Play or Pause")
+{
+    Header = new PanelHeader("Play/Pause"),
+    Border = BoxBorder.Square,
+    Expand = true
+};
+
+var volume = new Panel("Arrow up/down to increase/decrease volume")
+{
+    Header = new PanelHeader("Volume"),
+    Border = BoxBorder.Square,
+    Expand = true
+};
+
+var switchMusic = new Panel("Arrow left/right to change left/right music")
+{
+    Header = new PanelHeader("Switch Music"),
+    Border = BoxBorder.Square,
+    Expand = true
+};
+
+columns.Add(space);
+columns.Add(volume);
+columns.Add(switchMusic);
+
+AnsiConsole.Write(new Columns(columns){Expand = true});
 while (true)
 {
     var key = Console.ReadKey(true).Key;
     
     HandleKey(key);
-    
-    var currentMusic = new TextPath(musicFolder + "/" + musicFiles[i])
-    {
-        RootStyle = new Style(Color.Red),
-        SeparatorStyle = new Style(Color.Green),
-        StemStyle = new Style(Color.Blue),
-        LeafStyle = new Style(Color.Yellow)
-    };
-
-    var table = new Table().AddColumn(new TableColumn(currentMusic)).Centered();
-
-    AnsiConsole.Live(table)
-        .Start(ctx =>
-        {
-            ctx.Refresh();
-        });
 }
 
 void HandleKey(ConsoleKey key)
@@ -65,19 +78,23 @@ void HandleKey(ConsoleKey key)
             break;
         
         case ConsoleKey.LeftArrow:
-            outputDevice.Stop();
-            i -= 1;
-            outputDevice.Init(new AudioFileReader(musicFolder + "/" + musicFiles[i]));
-            outputDevice.Play();
+            SwitchMusic(--i);
             break;
         case ConsoleKey.RightArrow:
-            outputDevice.Stop();
-            i += 1;
-            outputDevice.Init(new AudioFileReader(musicFolder + "/" + musicFiles[i]));
-            outputDevice.Play();
+            SwitchMusic(++i);
             break;
     }
 
+}
+
+void SwitchMusic(int index)
+{
+    audioFile.Dispose();
+    
+    audioFile = new AudioFileReader(musicFolder + "/" + musicFiles[index]);
+    outputDevice.Stop();
+    outputDevice.Init(audioFile);
+    outputDevice.Play();
 }
 
 void TogglePlayback()
