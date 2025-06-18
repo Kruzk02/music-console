@@ -26,6 +26,7 @@ using var outputDevice = new WaveOutEvent();
 outputDevice.Stop();
 outputDevice.Init(audioFile);
 outputDevice.Play();
+Timer timer;
 
 var columns = new List<IRenderable>();
 var space = new Panel("Hit spacebar to Play or Pause")
@@ -56,10 +57,26 @@ columns.Add(switchMusic);
 AnsiConsole.Write(new Columns(columns){Expand = true});
 while (true)
 {
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            while (true)
+            {
+                BeginTimer();
+                await Task.Delay(200);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    });
     var key = Console.ReadKey(true).Key;
     
     HandleKey(key);
 }
+
 
 void HandleKey(ConsoleKey key)
 {
@@ -108,4 +125,17 @@ void TogglePlayback()
 void AdjustVolume(float delta)
 {
     outputDevice.Volume = Math.Clamp(outputDevice.Volume + delta, 0.0f, 1.0f);   
+}
+
+void BeginTimer()
+{
+    var current = audioFile.CurrentTime;
+    var end = audioFile.TotalTime;
+    
+    var ratio = current.TotalSeconds / end.TotalSeconds;
+    
+    Console.WriteLine(ratio);
+    if (Math.Abs(ratio - 1.0) < 1e-6) {
+        outputDevice.Stop();
+    }
 }
