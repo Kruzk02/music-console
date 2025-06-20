@@ -65,27 +65,28 @@ AnsiConsole.Write(new Columns(columns){Expand = true});
 
 var oldVolume = 0.0f;
 
-while (true)
-{
-    _ = Task.Run(async () =>
+await AnsiConsole.Progress()
+    .AutoClear(false)
+    .StartAsync(async ctx =>
     {
-        try
+        var task = ctx.AddTask(file);
+        while (true)
         {
-            while (true)
+            var progress = BeginTimer();
+            task.Value = progress * 100;
+
+            if (progress >= 1.0)
+                break;    
+            
+            if (Console.KeyAvailable)
             {
-                BeginTimer();
-                await Task.Delay(200);
+                var key = Console.ReadKey(true).Key;
+                HandleKey(key);
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
+            
+            await Task.Delay(200);
         }
     });
-    var key = Console.ReadKey(true).Key;
-    
-    HandleKey(key);
-}
 
 
 void HandleKey(ConsoleKey key)
@@ -158,15 +159,16 @@ void UnMute()
     outputDevice.Volume = oldVolume;
 }
 
-void BeginTimer()
+double BeginTimer()
 {
     var current = audioFile.CurrentTime;
     var end = audioFile.TotalTime;
     
     var ratio = current.TotalSeconds / end.TotalSeconds;
     
-    Console.WriteLine(ratio);
     if (Math.Abs(ratio - 1.0) < 1e-6) {
         outputDevice.Stop();
     }
+
+    return ratio;
 }
