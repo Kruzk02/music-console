@@ -26,35 +26,45 @@ using var outputDevice = new WaveOutEvent();
 outputDevice.Stop();
 outputDevice.Init(audioFile);
 outputDevice.Play();
-Timer timer;
 
 var columns = new List<IRenderable>();
-var space = new Panel("Hit spacebar to Play or Pause")
+var spaceColumn = new Panel("Hit spacebar to Play or Pause")
 {
     Header = new PanelHeader("Play/Pause"),
     Border = BoxBorder.Square,
     Expand = true
 };
 
-var volume = new Panel("Arrow up/down to increase/decrease volume")
+var volumeColumn = new Panel("Arrow up/down to increase/decrease volume")
 {
     Header = new PanelHeader("Volume"),
     Border = BoxBorder.Square,
     Expand = true
 };
 
-var switchMusic = new Panel("Arrow left/right to change left/right music")
+var switchMusicColumn = new Panel("Arrow left/right to change left/right music")
 {
     Header = new PanelHeader("Switch Music"),
     Border = BoxBorder.Square,
     Expand = true
 };
 
-columns.Add(space);
-columns.Add(volume);
-columns.Add(switchMusic);
+var muteVolumeColumn = new Panel("Press M key to mute or unmute")
+{
+    Header = new PanelHeader("Mute/Unmute volume"),
+    Border = BoxBorder.Square,
+    Expand = true
+};
+
+columns.Add(spaceColumn);
+columns.Add(volumeColumn);
+columns.Add(switchMusicColumn);
+columns.Add(muteVolumeColumn);
 
 AnsiConsole.Write(new Columns(columns){Expand = true});
+
+var oldVolume = 0.0f;
+
 while (true)
 {
     _ = Task.Run(async () =>
@@ -100,6 +110,16 @@ void HandleKey(ConsoleKey key)
         case ConsoleKey.RightArrow:
             SwitchMusic(++i);
             break;
+        case ConsoleKey.M:
+            if (outputDevice.Volume > 0)
+            {
+                Mute();
+            }
+            else
+            {
+                UnMute();
+            }
+            break;
     }
 
 }
@@ -125,6 +145,17 @@ void TogglePlayback()
 void AdjustVolume(float delta)
 {
     outputDevice.Volume = Math.Clamp(outputDevice.Volume + delta, 0.0f, 1.0f);   
+}
+
+void Mute()
+{
+    oldVolume = outputDevice.Volume;
+    outputDevice.Volume = 0;
+}
+
+void UnMute()
+{
+    outputDevice.Volume = oldVolume;
 }
 
 void BeginTimer()
