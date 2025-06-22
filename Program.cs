@@ -73,10 +73,21 @@ await AnsiConsole.Progress()
         while (true)
         {
             var progress = BeginTimer();
-            task.Value = progress * 100;
-
-            if (progress >= 1.0)
-                break;    
+            task.Value = Math.Round(progress * 100, 2);
+            
+            if (task.Value >= 99.99)
+            {
+                if (i + 1 < musicFiles.Count)
+                {
+                    SwitchMusic(++i);
+                    
+                    task = ctx.AddTask(musicFiles[i]);
+                }
+                else
+                {
+                    break;
+                }
+            }
             
             if (Console.KeyAvailable)
             {
@@ -166,9 +177,5 @@ double BeginTimer()
     
     var ratio = current.TotalSeconds / end.TotalSeconds;
     
-    if (Math.Abs(ratio - 1.0) < 1e-6) {
-        outputDevice.Stop();
-    }
-
     return ratio;
 }
