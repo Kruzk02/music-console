@@ -27,43 +27,24 @@ outputDevice.Stop();
 outputDevice.Init(audioFile);
 outputDevice.Play();
 
+var oldVolume = 0.0f;
+
+
 var columns = new List<IRenderable>();
-var spaceColumn = new Panel("Hit spacebar to Play or Pause")
-{
-    Header = new PanelHeader("Play/Pause"),
-    Border = BoxBorder.Square,
-    Expand = true
-};
 
-var volumeColumn = new Panel("Arrow up/down to increase/decrease volume")
-{
-    Header = new PanelHeader("Volume"),
-    Border = BoxBorder.Square,
-    Expand = true
-};
-
-var switchMusicColumn = new Panel("Arrow left/right to change left/right music")
-{
-    Header = new PanelHeader("Switch Music"),
-    Border = BoxBorder.Square,
-    Expand = true
-};
-
-var muteVolumeColumn = new Panel("Press M key to mute or unmute")
-{
-    Header = new PanelHeader("Mute/Unmute volume"),
-    Border = BoxBorder.Square,
-    Expand = true
-};
-
+var spaceColumn = SetPanel("Hit space bar to Play or Pause", "Play/Pause");
 columns.Add(spaceColumn);
+
+var volumeColumn = SetPanel("Arrow up/down to increase/decrease volume", "Volume");
 columns.Add(volumeColumn);
+
+var switchMusicColumn = SetPanel("Arrow left/right to change left/right music", "Switch Music");
 columns.Add(switchMusicColumn);
+
+var muteVolumeColumn = SetPanel("Press M key to mute or unmute", "Mute/Unmute volume");
 columns.Add(muteVolumeColumn);
 
 AnsiConsole.Write(new Columns(columns){Expand = true});
-
-var oldVolume = 0.0f;
 
 await AnsiConsole.Progress()
     .AutoClear(false)
@@ -83,10 +64,7 @@ await AnsiConsole.Progress()
                     
                     task = ctx.AddTask(musicFiles[i]);
                 }
-                else
-                {
-                    break;
-                }
+                else break;
             }
             
             if (Console.KeyAvailable)
@@ -178,4 +156,14 @@ double BeginTimer()
     var ratio = current.TotalSeconds / end.TotalSeconds;
     
     return ratio;
+}
+
+Panel SetPanel(string text, string header)
+{
+    return new Panel(text)
+    {
+        Header = new PanelHeader(header),
+        Border = BoxBorder.Square,
+        Expand = true
+    };
 }
