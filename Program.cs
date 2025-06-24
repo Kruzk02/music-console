@@ -58,61 +58,52 @@ await AnsiConsole.Progress()
             
             if (task.Value >= 99.99)
             {
-                if (i + 1 < musicFiles.Count)
-                {
-                    SwitchMusic(++i);
-                    
-                    task = ctx.AddTask(musicFiles[i]);
-                }
-                else break;
+                NextMusic();
+                
+                task = ctx.AddTask(musicFiles[i]);
             }
             
             if (Console.KeyAvailable)
             {
                 var key = Console.ReadKey(true).Key;
-                HandleKey(key);
+                switch (key)
+                {
+                    case ConsoleKey.Spacebar:
+                        TogglePlayback();
+                        break;
+
+                    case ConsoleKey.UpArrow:
+                        AdjustVolume(+0.1f);
+                        break;
+
+                    case ConsoleKey.DownArrow:
+                        AdjustVolume(-0.1f);
+                        break;
+        
+                    case ConsoleKey.LeftArrow:
+                        PrevMusic();
+                        task = ctx.AddTask(musicFiles[i]);
+                        break;
+                    case ConsoleKey.RightArrow:
+                        NextMusic();
+                        task = ctx.AddTask(musicFiles[i]);
+                        break;
+                    case ConsoleKey.M:
+                        if (outputDevice.Volume > 0)
+                        {
+                            Mute();
+                        }
+                        else
+                        {
+                            UnMute();
+                        }
+                        break;
+                }
             }
             
             await Task.Delay(200);
         }
     });
-
-
-void HandleKey(ConsoleKey key)
-{
-    switch (key)
-    {
-        case ConsoleKey.Spacebar:
-            TogglePlayback();
-            break;
-
-        case ConsoleKey.UpArrow:
-            AdjustVolume(+0.1f);
-            break;
-
-        case ConsoleKey.DownArrow:
-            AdjustVolume(-0.1f);
-            break;
-        
-        case ConsoleKey.LeftArrow:
-            SwitchMusic(--i);
-            break;
-        case ConsoleKey.RightArrow:
-            SwitchMusic(++i);
-            break;
-        case ConsoleKey.M:
-            if (outputDevice.Volume > 0)
-            {
-                Mute();
-            }
-            else
-            {
-                UnMute();
-            }
-            break;
-    }
-
-}
 
 void SwitchMusic(int index)
 {
@@ -122,6 +113,16 @@ void SwitchMusic(int index)
     outputDevice.Stop();
     outputDevice.Init(audioFile);
     outputDevice.Play();
+}
+
+void NextMusic()
+{
+    if (i + 1 < musicFiles.Count) SwitchMusic(++i);
+}
+
+void PrevMusic()
+{
+    if (i > 0) SwitchMusic(--i);
 }
 
 void TogglePlayback()
