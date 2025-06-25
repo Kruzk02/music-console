@@ -28,7 +28,7 @@ outputDevice.Init(audioFile);
 outputDevice.Play();
 
 var oldVolume = 0.0f;
-
+var isLoop = false;
 
 var columns = new List<IRenderable>();
 
@@ -41,26 +41,40 @@ columns.Add(volumeColumn);
 var switchMusicColumn = SetPanel("Arrow left/right to change left/right music", "Switch Music");
 columns.Add(switchMusicColumn);
 
+var loopMusicColumn = SetPanel("Hit R key to loop music", "Loop Music");
+columns.Add(loopMusicColumn);
+
 var muteVolumeColumn = SetPanel("Press M key to mute or unmute", "Mute/Unmute volume");
 columns.Add(muteVolumeColumn);
 
+var quiteColumn = SetPanel("Press Q key to Exit", "Exit");
+columns.Add(quiteColumn);
+
 AnsiConsole.Write(new Columns(columns){Expand = true});
 
+// ReSharper disable FunctionNeverReturns
 await AnsiConsole.Progress()
     .AutoClear(false)
     .StartAsync(async ctx =>
     {
         var task = ctx.AddTask(file);
-        while (true)
+        var isRunning = true;
+        while (isRunning)
         {
             var progress = BeginTimer();
             task.Value = Math.Round(progress * 100, 2);
             
             if (task.Value >= 99.99)
             {
-                NextMusic();
-                
-                task = ctx.AddTask(musicFiles[i]);
+                if (isLoop)
+                {
+                    SwitchMusic(i);
+                }
+                else
+                {
+                    NextMusic();
+                }
+                task = ctx.AddTask(musicFiles[i]);   
             }
             
             if (Console.KeyAvailable)
@@ -98,12 +112,19 @@ await AnsiConsole.Progress()
                             UnMute();
                         }
                         break;
+                    case ConsoleKey.R:
+                        isLoop = !isLoop;
+                        break;
+                    case ConsoleKey.Q:
+                        isRunning = false;
+                        break;
                 }
             }
             
             await Task.Delay(200);
         }
     });
+// ReSharper restore FunctionNeverReturns
 
 void SwitchMusic(int index)
 {
