@@ -128,12 +128,13 @@ await AnsiConsole.Progress()
                         if (isShuffle)
                         {
                             ShuffleMusic();
+                            task = SetMusicName(ctx);
                         }
                         else
                         {
                             SwitchMusic(0);
+                            task = SetMusicName(ctx);
                         }
-                        task = SetMusicName(ctx);
                         break;
                 }
             }
