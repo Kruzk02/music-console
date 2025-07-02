@@ -18,7 +18,7 @@ var file = AnsiConsole.Prompt(
         .MoreChoicesText("[grey](Move up and down to reveal more music)[/]")
         .AddChoices(musicFiles));
 
-var i = musicFiles.FindIndex(0, mFile => mFile == file);
+var index = musicFiles.FindIndex(0, mFile => mFile == file);
 
 var audioFile = new AudioFileReader(musicFolder + "/" + file);
 using var outputDevice = new WaveOutEvent();
@@ -27,8 +27,10 @@ outputDevice.Stop();
 outputDevice.Init(audioFile);
 outputDevice.Play();
 
+var shuffleMusic= new List<string>(musicFiles) ;
 var oldVolume = 0.0f;
 var isLoop = false;
+var isShuffle = false;
 
 var columns = new List<IRenderable>();
 
@@ -43,6 +45,9 @@ columns.Add(switchMusicColumn);
 
 var loopMusicColumn = SetPanel("Hit R key to loop music", "Loop Music");
 columns.Add(loopMusicColumn);
+
+var shuffleMusicColumn = SetPanel("Press S key to shuffle", "Shuffle Music");
+columns.Add(shuffleMusicColumn);
 
 var muteVolumeColumn = SetPanel("Press M key to mute or unmute", "Mute/Unmute volume");
 columns.Add(muteVolumeColumn);
@@ -68,13 +73,13 @@ await AnsiConsole.Progress()
             {
                 if (isLoop)
                 {
-                    SwitchMusic(i);
+                    SwitchMusic(index);
                 }
                 else
                 {
                     NextMusic();
                 }
-                task = ctx.AddTask(musicFiles[i]);   
+                task = SetMusicName(ctx);
             }
             
             if (Console.KeyAvailable)
@@ -96,11 +101,11 @@ await AnsiConsole.Progress()
         
                     case ConsoleKey.LeftArrow:
                         PrevMusic();
-                        task = ctx.AddTask(musicFiles[i]);
+                        task = SetMusicName(ctx);
                         break;
                     case ConsoleKey.RightArrow:
                         NextMusic();
-                        task = ctx.AddTask(musicFiles[i]);
+                        task = SetMusicName(ctx);
                         break;
                     case ConsoleKey.M:
                         if (outputDevice.Volume > 0)
@@ -118,6 +123,18 @@ await AnsiConsole.Progress()
                     case ConsoleKey.Q:
                         isRunning = false;
                         break;
+                    case ConsoleKey.S:
+                        isShuffle = !isShuffle;
+                        if (isShuffle)
+                        {
+                            ShuffleMusic();
+                        }
+                        else
+                        {
+                            SwitchMusic(0);
+                        }
+                        task = SetMusicName(ctx);
+                        break;
                 }
             }
             
@@ -126,24 +143,44 @@ await AnsiConsole.Progress()
     });
 // ReSharper restore FunctionNeverReturns
 
-void SwitchMusic(int index)
+ProgressTask SetMusicName(ProgressContext ctx)
+{
+   return isShuffle ? ctx.AddTask(shuffleMusic[index]) : ctx.AddTask(musicFiles[index]);
+}
+
+void SwitchMusic(int i)
 {
     audioFile.Dispose();
     
-    audioFile = new AudioFileReader(musicFolder + "/" + musicFiles[index]);
+    audioFile = new AudioFileReader(musicFolder + "/" + (isShuffle ? shuffleMusic[i] : musicFiles[i]));
     outputDevice.Stop();
     outputDevice.Init(audioFile);
     outputDevice.Play();
 }
 
+void ShuffleMusic()
+{
+    var random = new Random();
+    
+    for (var i = musicFiles.Count - 1; i > 0; i--)
+    {
+        var j = random.Next(i + 1);
+        
+        (shuffleMusic[i], shuffleMusic[j]) = (shuffleMusic[j], shuffleMusic[i]);
+    }
+
+    index = 0;
+    SwitchMusic(0);
+}
+
 void NextMusic()
 {
-    if (i + 1 < musicFiles.Count) SwitchMusic(++i);
+    if (index + 1 < musicFiles.Count) SwitchMusic(++index);
 }
 
 void PrevMusic()
 {
-    if (i > 0) SwitchMusic(--i);
+    if (index > 0) SwitchMusic(--index);
 }
 
 void TogglePlayback()
