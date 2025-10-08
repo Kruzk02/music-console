@@ -59,7 +59,7 @@ AnsiConsole.Write(new Columns(columns){Expand = true});
 
 // ReSharper disable FunctionNeverReturns
 await AnsiConsole.Progress()
-    .AutoClear(false)
+    .AutoClear(true)
     .StartAsync(async ctx =>
     {
         var task = ctx.AddTask(file);
@@ -71,14 +71,8 @@ await AnsiConsole.Progress()
             
             if (task.Value >= 99.99)
             {
-                if (isLoop)
-                {
-                    SwitchMusic(index);
-                }
-                else
-                {
-                    NextMusic();
-                }
+                if (isLoop) SwitchMusic(index);
+                else NextMusic();
                 task = SetMusicName(ctx);
             }
             
@@ -107,15 +101,17 @@ await AnsiConsole.Progress()
                         NextMusic();
                         task = SetMusicName(ctx);
                         break;
+                    case ConsoleKey.A:
+                        if (audioFile.CurrentTime > TimeSpan.Zero) 
+                            ChangeCurrentTimeOfAudio(TimeSpan.FromSeconds(-10));
+                        break;
+                    case ConsoleKey.D:
+                        if (audioFile.CurrentTime < audioFile.TotalTime)
+                            ChangeCurrentTimeOfAudio(TimeSpan.FromSeconds(10));
+                        break;
                     case ConsoleKey.M:
-                        if (outputDevice.Volume > 0)
-                        {
-                            Mute();
-                        }
-                        else
-                        {
-                            UnMute();
-                        }
+                        if (outputDevice.Volume > 0) Mute();
+                        else UnMute();
                         break;
                     case ConsoleKey.R:
                         isLoop = !isLoop;
@@ -142,11 +138,17 @@ await AnsiConsole.Progress()
             await Task.Delay(200);
         }
     });
+return;
 // ReSharper restore FunctionNeverReturns
 
 ProgressTask SetMusicName(ProgressContext ctx)
 {
    return isShuffle ? ctx.AddTask(shuffleMusic[index]) : ctx.AddTask(musicFiles[index]);
+}
+
+void ChangeCurrentTimeOfAudio(TimeSpan timeSpan)
+{
+    audioFile.CurrentTime = audioFile.CurrentTime.Add(timeSpan);
 }
 
 void SwitchMusic(int i)
