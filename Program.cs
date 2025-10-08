@@ -43,6 +43,9 @@ columns.Add(volumeColumn);
 var switchMusicColumn = SetPanel("Arrow left/right to change left/right music", "Switch Music");
 columns.Add(switchMusicColumn);
 
+var jumpTimeMusicColumn = SetPanel("A/D to change forward/backward current time music", "Peek Music");
+columns.Add(jumpTimeMusicColumn);
+
 var loopMusicColumn = SetPanel("Hit R key to loop music", "Loop Music");
 columns.Add(loopMusicColumn);
 
